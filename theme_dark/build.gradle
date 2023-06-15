@@ -29,6 +29,32 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    android.applicationVariants.all {   variant ->
+        variant.outputs.all {
+            outputFileName = "dark.skin"
+        }
+
+    }
+}
+
+tasks.whenTaskAdded {   task ->
+    if (task.name.startsWith("assemble") && task.name.endsWith("Release")) {
+        // 存放Apk的父目录名字
+        def var = task.name.substring("assemble".length()).toLowerCase()
+        println "task.name= " + var
+        task.doLast {
+            println "执行 doLast for= " + task.name
+            // 拷贝生成的APK文件到指定目录
+            def apkFile = "$buildDir/outputs/apk/$var/dark.skin"
+            def destDir = file("$projectDir/../app/src/main/assets/skins")
+            println "copy from " + apkFile + " to " + destDir
+            copy {
+                from apkFile
+                into destDir
+            }
+        }
+    }
 }
 
 dependencies {

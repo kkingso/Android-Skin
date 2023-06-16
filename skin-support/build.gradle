@@ -29,6 +29,8 @@ android {
     }
 }
 
+apply from: "${rootProject.projectDir}/publish_mavencentral.gradle"
+
 dependencies {
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])

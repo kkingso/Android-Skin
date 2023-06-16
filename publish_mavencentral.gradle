@@ -1,0 +1,83 @@
+// add maven-publish and signing gradle plugin
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+// get sonatype account from maven.properties
+Properties properties = new Properties()
+properties.load(project.rootProject.file('maven.properties').newDataInputStream())
+def ossrhUsername = properties.get("ossrhUsername")
+def ossrhPassword = properties.get("ossrhPassword")
+
+// 用于打包源代码的任务
+task androidSourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from android.sourceSets.main.java.srcDirs
+    exclude "**/R.class"
+    exclude "**/BuildConfig.class"
+}
+
+// add publish script
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId PUBLISH_GROUP_ID
+            artifactId PUBLISH_ARTIFACT_ID
+            version PUBLISH_VERSION
+
+            artifact androidSourcesJar
+            // Two artifacts, the `aar` and the sources
+            artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
+
+            // Self-explanatory metadata for the most part
+            pom {
+                name = PUBLISH_ARTIFACT_ID
+                description = 'An Skin Library for Android'
+                url = 'https://github.com/kkingso/Android-Skin'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'kkingso'
+                        name = 'kkw'
+                        email = '858827278@qq.com'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git@https://github.com/kkingso/Android-Skin.git'
+                    developerConnection = 'scm:git@https://github.com/kkingso/Android-Skin.git'
+                    url = 'https://github.com/kkingso/Android-Skin'
+                }
+            }
+
+//            afterEvaluate {
+//                from components.release
+//            }
+        }
+    }
+    repositories {
+        maven {
+            name = "skinsupport"
+            def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            credentials {
+                username ossrhUsername // ossrhUsername is your sonatype username
+                password ossrhPassword  // ossrhPassword is your sonatype password
+            }
+        }
+    }
+}
+
+// signing, this need key, secret, we put it into gradle.properties
+signing {
+    sign publishing.publications.release
+}
+
+
